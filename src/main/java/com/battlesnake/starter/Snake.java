@@ -147,13 +147,21 @@ public class Snake {
 
             String[] possibleMoves = { "up", "down", "left", "right" };
 
-            List<Coords> foodCoords = getCoordsFromNodeArray(moveRequest.get("board").get("food"));
-            List<Coords> otherSnakeCoords = getSnakeCoords(moveRequest.get("board").get("snakes"));
 
             // Get board limit coords
             // Get our own coords
-
             // Avoid board limit, snake coords, and own coord
+            List<Coords> foodCoords = getCoordsFromNodeArray(moveRequest.get("board").get("food"));
+            List<Coords> otherSnakeCoords = getOtherSnakeCoords(moveRequest.get("board").get("snakes"));
+            List<Coords> snakeCoords = getSnakeCoords(moveRequest.get("you"));
+            List<Coords> boardBox = getBoardBox(moveRequest.get("board"));
+            List<Coords> badMoves = new ArrayList<>();
+            badMoves.addAll(otherSnakeCoords);
+            badMoves.addAll(snakeCoords);
+            badMoves.addAll(boardBox);
+
+
+
             // Generate list of possible moves
             // Choose random move of possible
 
@@ -194,10 +202,48 @@ public class Snake {
             return EMPTY;
         }
 
-        private List<Coords> getSnakeCoords(JsonNode snakeNodeArray) {
+        private List<Coords> getBoardBox(JsonNode board) {
+            if (board.isNull() || board.isArray())
+                return Collections.emptyList();
+
+            int height = board.get("height").asInt();
+            int width = board.get("width").asInt();
+            List<Coords> boardBox = new ArrayList<>();
+
+            for (int i = 0; i < height; i++) {
+                boardBox.add(new Coords(-1, i));
+                boardBox.add(new Coords(11, i));
+            }
+            for (int i = 0; i < width; i++) {
+                boardBox.add(new Coords(i, -1));
+                boardBox.add(new Coords(i, 11));
+            }
+
+            return boardBox;
+
+            //board is 11 x 11
+            // [width, height]
+            // [-1,-1], [-1,0], ... [-1,11]
+            // [-1,-1], [0,-1], ... [11,-1]
+            // [11,-1], [11,0], ... [11,11]
+            // [-1,11], [0,11], ... [11,11]
+            // corners don't matter
+        }
+
+        private List<Coords> getSnakeCoords(JsonNode snake) {
+            if (snake.isNull() || snake.isArray()) return Collections.emptyList();
+
+            List<Coords> coords = new ArrayList<>();
+
+            coords.addAll(getCoordsFromNodeArray(snake.get("body")));
+
+            return coords;
+        }
+
+        private List<Coords> getOtherSnakeCoords(JsonNode snakeNodeArray) {
             if (snakeNodeArray.isNull() || !snakeNodeArray.isArray()) return Collections.emptyList();
 
-            List<Coords> coords = Collections.emptyList();
+            List<Coords> coords = new ArrayList<>();
 
             for (JsonNode snakeNode : snakeNodeArray) {
                 coords.addAll(getCoordsFromNodeArray(snakeNode.get("body")));
@@ -209,7 +255,7 @@ public class Snake {
         private List<Coords> getCoordsFromNodeArray(JsonNode nodeArray) {
             if (nodeArray.isNull() || !nodeArray.isArray()) return Collections.emptyList();
 
-            List<Coords> coords = Collections.emptyList();
+            List<Coords> coords = new ArrayList<>();
 
             for (JsonNode bodyNode : nodeArray) {
                 coords.add(new Coords(bodyNode.get("x").asInt(), bodyNode.get("y").asInt()));
