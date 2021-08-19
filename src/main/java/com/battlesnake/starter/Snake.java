@@ -10,13 +10,11 @@ import spark.Response;
 
 import java.util.*;
 
-import static spark.Spark.port;
-import static spark.Spark.post;
-import static spark.Spark.get;
+import static spark.Spark.*;
 
 /**
  * This is a simple Battlesnake server written in Java.
- * 
+ * <p>
  * For instructions see
  * https://github.com/BattlesnakeOfficial/starter-snake-java/README.md
  */
@@ -39,7 +37,7 @@ public class Snake {
             port = "8080";
         }
         port(Integer.parseInt(port));
-        get("/",  HANDLER::process, JSON_MAPPER::writeValueAsString);
+        get("/", HANDLER::process, JSON_MAPPER::writeValueAsString);
         post("/start", HANDLER::process, JSON_MAPPER::writeValueAsString);
         post("/move", HANDLER::process, JSON_MAPPER::writeValueAsString);
         post("/end", HANDLER::process, JSON_MAPPER::writeValueAsString);
@@ -87,28 +85,28 @@ public class Snake {
             }
         }
 
-    
+
         /**
          * This method is called everytime your Battlesnake is entered into a game.
-         * 
+         * <p>
          * Use this method to decide how your Battlesnake is going to look on the board.
          *
          * @return a response back to the engine containing the Battlesnake setup
-         *         values.
+         * values.
          */
-        public Map<String, String> index() {         
+        public Map<String, String> index() {
             Map<String, String> response = new HashMap<>();
             response.put("apiversion", "1");
             response.put("author", "Moms Spaghetti");
             response.put("color", "#4A412A");
             response.put("head", "shades");
-            response.put("tail", "pixel");  
+            response.put("tail", "pixel");
             return response;
         }
 
         /**
          * This method is called everytime your Battlesnake is entered into a game.
-         * 
+         * <p>
          * Use this method to decide how your Battlesnake is going to look on the board.
          *
          * @param startRequest a JSON data map containing the information about the game
@@ -123,7 +121,7 @@ public class Snake {
         /**
          * This method is called on every turn of a game. It's how your snake decides
          * where to move.
-         * 
+         * <p>
          * Valid moves are "up", "down", "left", or "right".
          *
          * @param moveRequest a map containing the JSON sent to this snake. Use this
@@ -137,36 +135,28 @@ public class Snake {
                 e.printStackTrace();
             }
 
-            /*
-                Example how to retrieve data from the request payload:
-
-                String gameId = moveRequest.get("game").get("id").asText();
-                int height = moveRequest.get("board").get("height").asInt();
-
-            */
-
-            String[] possibleMoves = { "up", "down", "left", "right" };
+            String[] possibleMoves = {"up", "down", "left", "right"};
 
             List<Coords> foodCoords = getCoordsFromNodeArray(moveRequest.get("board").get("food"));
-            List<Coords> otherSnakeCoords = getSnakeCoords(moveRequest.get("board").get("snakes"));
+            List<Coords> otherSnakeCoords = getOtherSnakeCoords(moveRequest.get("board").get("snakes"));
+            List<Coords> boardBox = getBoardBox(moveRequest.get("board"));
+            List<Coords> badMoves = new ArrayList<>();
+            badMoves.addAll(otherSnakeCoords);
+            badMoves.addAll(boardBox);
 
-            // Get board limit coords
-            // Get our own coords
+            Coords head = getCoordFromNode(moveRequest.get("you").get("head"));
+            List<Coords> possible = getPossibleMoves(badMoves, head);
 
-            // Avoid board limit, snake coords, and own coord
-            // Generate list of possible moves
-            // Choose random move of possible
+            Random rand = new Random();
+            Coords randomMove = possible.get(rand.nextInt(possible.size()));
+            String move = head.getMove(randomMove);
 
-            // Choose a random direction to move in
-            int choice = new Random().nextInt(possibleMoves.length);
-            String move = "left";
-
-            // Prioritize food ?
-
+            Coords targetCoords = null;
+            if (!foodCoords.isEmpty() && moveRequest.get("you").get("health").asInt() <= 25) {
+                targetCoords = findClosestAvailableFood(head, foodCoords, otherSnakeCoords);
+            }
 
             //GOALS (in order):
-            //Have a random legal move function - Working snake
-            //Have a food finding loop - maybe trigger at 25 food
             //Have a stalling function - run early on to waste time and have board control
             //Have a fighting function - find a way to eliminate opponents
             //Blend all the above together to make a decent spaghetti monster
@@ -180,7 +170,7 @@ public class Snake {
 
         /**
          * This method is called when a game your Battlesnake was in ends.
-         * 
+         * <p>
          * It is purely for informational purposes, you don't have to make any decisions
          * here.
          *
@@ -194,10 +184,69 @@ public class Snake {
             return EMPTY;
         }
 
-        private List<Coords> getSnakeCoords(JsonNode snakeNodeArray) {
+        private List<Coords> getPossibleMoves(List<Coords> badMoves, Coords ourHead) {
+            // [0,1],[3,4],[8,3],[9,2] , me [7,5]
+//            List<Coords> possibleMoves = new ArrayList<Coords>();
+//            possibleMoves.add(new Coords(ourHead.x, ourHead.y - 1));
+//            possibleMoves.add(new Coords(ourHead.x, ourHead.y + 1));
+//            possibleMoves.add(new Coords(ourHead.x - 1, ourHead.y));
+//            possibleMoves.add(new Coords(ourHead.x + 1, ourHead.y));
+            List<Coords> result = new ArrayList<Coords>();
+            HashMap<String, Coords> badMovesMap = new HashMap<>();
+            for (Coords coord : badMoves) {
+                badMovesMap.put(String.format("%d:%d", coord.x, coord.y), coord);
+            }
+
+            for (Coords coord : ourHead.getSurroundingNodes()) {
+                if (badMovesMap.containsKey(String.format("%d:%d", coord.x, coord.y))) continue;
+                result.add(coord);
+            }
+
+            return result;
+        }
+
+        private List<Coords> getBoardBox(JsonNode board) {
+            if (board.isNull() || board.isArray())
+                return Collections.emptyList();
+
+            int height = board.get("height").asInt();
+            int width = board.get("width").asInt();
+            List<Coords> boardBox = new ArrayList<>();
+
+            for (int i = 0; i < height; i++) {
+                boardBox.add(new Coords(-1, i));
+                boardBox.add(new Coords(11, i));
+            }
+            for (int i = 0; i < width; i++) {
+                boardBox.add(new Coords(i, -1));
+                boardBox.add(new Coords(i, 11));
+            }
+
+            return boardBox;
+
+            //board is 11 x 11
+            // [width, height]
+            // [-1,-1], [-1,0], ... [-1,11]
+            // [-1,-1], [0,-1], ... [11,-1]
+            // [11,-1], [11,0], ... [11,11]
+            // [-1,11], [0,11], ... [11,11]
+            // corners don't matter
+        }
+
+        private List<Coords> getSnakeCoords(JsonNode snake) {
+            if (snake.isNull() || snake.isArray()) return Collections.emptyList();
+
+            List<Coords> coords = new ArrayList<>();
+
+            coords.addAll(getCoordsFromNodeArray(snake.get("body")));
+
+            return coords;
+        }
+
+        private List<Coords> getOtherSnakeCoords(JsonNode snakeNodeArray) {
             if (snakeNodeArray.isNull() || !snakeNodeArray.isArray()) return Collections.emptyList();
 
-            List<Coords> coords = Collections.emptyList();
+            List<Coords> coords = new ArrayList<>();
 
             for (JsonNode snakeNode : snakeNodeArray) {
                 coords.addAll(getCoordsFromNodeArray(snakeNode.get("body")));
@@ -209,13 +258,62 @@ public class Snake {
         private List<Coords> getCoordsFromNodeArray(JsonNode nodeArray) {
             if (nodeArray.isNull() || !nodeArray.isArray()) return Collections.emptyList();
 
-            List<Coords> coords = Collections.emptyList();
+            List<Coords> coords = new ArrayList<>();
 
             for (JsonNode bodyNode : nodeArray) {
                 coords.add(new Coords(bodyNode.get("x").asInt(), bodyNode.get("y").asInt()));
             }
 
             return coords;
+        }
+
+        private Coords getCoordFromNode(JsonNode node) {
+            if (node.isNull() || node.isArray()) return null;
+
+            return new Coords(node.get("x").asInt(), node.get("y").asInt());
+        }
+
+        private Coords findClosestAvailableFood(Coords ourSnakeHead, List<Coords> foodList, List<Coords> otherSnakes) {
+            if (foodList.isEmpty()) return null;
+
+            Coords closestAnyFoodCoords = null;
+            Coords closestSafeFoodCoords = null;
+            int distanceToClosestAnyFood = 0;
+
+            for (Coords food : foodList) {
+                int distanceToFood = getTotalDistanceBetweenCoords(food, ourSnakeHead);
+
+                // Check this if this is the first food found or is the closest food
+                if (distanceToClosestAnyFood == 0 || distanceToFood < distanceToClosestAnyFood) {
+                    closestAnyFoodCoords = food;
+                    distanceToClosestAnyFood = distanceToFood;
+
+                    // Check if this is the closest food not closer to another snake
+                    if (distanceToFood <= getOtherSnakeClosestDistanceToFood(food, otherSnakes)) {
+                        closestSafeFoodCoords = food;
+                    }
+                }
+            }
+
+            return closestSafeFoodCoords != null ? closestSafeFoodCoords : closestAnyFoodCoords;
+        }
+
+        private int getTotalDistanceBetweenCoords(Coords coordsA, Coords coordsB) {
+            return Math.abs(coordsA.x - coordsB.x) + Math.abs(coordsA.y - coordsB.y);
+        }
+
+        private int getOtherSnakeClosestDistanceToFood(Coords food, List<Coords> otherSnakes) {
+            int distanceToClosestFood = 0;
+
+            for (Coords otherSnake: otherSnakes) {
+                int distanceToFood = getTotalDistanceBetweenCoords(food, otherSnake);
+
+                if (distanceToClosestFood == 0 || distanceToFood < distanceToClosestFood) {
+                    distanceToClosestFood = distanceToFood;
+                }
+            }
+
+            return distanceToClosestFood;
         }
     }
 
