@@ -101,10 +101,10 @@ public class Snake {
         public Map<String, String> index() {         
             Map<String, String> response = new HashMap<>();
             response.put("apiversion", "1");
-            response.put("author", "");           // TODO: Your Battlesnake Username
-            response.put("color", "#888888");     // TODO: Personalize
-            response.put("head", "default");  // TODO: Personalize
-            response.put("tail", "default");  // TODO: Personalize
+            response.put("author", "Moms Spaghetti");
+            response.put("color", "#4A412A");
+            response.put("head", "shades");
+            response.put("tail", "pixel");  
             return response;
         }
 
@@ -156,7 +156,7 @@ public class Snake {
             LOG.info("MOVE {}", move);
 
             Map<String, String> response = new HashMap<>();
-            response.put("move", move);
+            response.put("move", "down");
             return response;
         }
 
