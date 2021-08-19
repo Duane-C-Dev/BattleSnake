@@ -226,11 +226,11 @@ public class Snake {
 
             for (int i = 0; i < height; i++) {
                 boardBox.add(new Coords(-1, i));
-                boardBox.add(new Coords(width + 1, i));
+                boardBox.add(new Coords(width, i));
             }
             for (int i = 0; i < width; i++) {
                 boardBox.add(new Coords(i, -1));
-                boardBox.add(new Coords(i, height + 1));
+                boardBox.add(new Coords(i, height));
             }
 
             return boardBox;
