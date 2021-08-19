@@ -225,12 +225,12 @@ public class Snake {
             List<Coords> boardBox = new ArrayList<>();
 
             for (int i = 0; i < height; i++) {
-                boardBox.add(new Coords(-1, i));
-                boardBox.add(new Coords(11, i));
+                boardBox.add(new Coords(width - 1, i));
+                boardBox.add(new Coords(width + 1, i));
             }
             for (int i = 0; i < width; i++) {
-                boardBox.add(new Coords(i, -1));
-                boardBox.add(new Coords(i, 11));
+                boardBox.add(new Coords(i, height - 1));
+                boardBox.add(new Coords(i, height + 1));
             }
 
             return boardBox;
