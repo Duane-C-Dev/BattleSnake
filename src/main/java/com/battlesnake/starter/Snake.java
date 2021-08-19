@@ -156,7 +156,7 @@ public class Snake {
             LOG.info("MOVE {}", move);
 
             Map<String, String> response = new HashMap<>();
-            response.put("move", move);
+            response.put("move", "down");
             return response;
         }
 
