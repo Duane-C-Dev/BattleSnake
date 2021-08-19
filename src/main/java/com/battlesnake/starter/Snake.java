@@ -8,9 +8,7 @@ import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 import static spark.Spark.port;
 import static spark.Spark.post;
@@ -56,9 +54,6 @@ public class Snake {
          * For the start/end request
          */
         private static final Map<String, String> EMPTY = new HashMap<>();
-
-        SnakeObj us;
-        Map<String, SnakeObj> them;
 
         /**
          * Generic processor that prints out the request and response from the methods.
@@ -121,18 +116,6 @@ public class Snake {
          * @return responses back to the engine are ignored.
          */
         public Map<String, String> start(JsonNode startRequest) {
-            JsonNode bodyNodes = startRequest.get("you").get("body");
-            int bodyIndex = 0;
-            if (bodyNodes.isArray()) {
-                for (JsonNode bodyNode : bodyNodes) {
-                    if (bodyIndex == 0) {
-                        us = new SnakeObj(bodyNode.get("x").asInt(), bodyNode.get("y").asInt(), bodyNodes.size());
-                    } else {
-                        us.Move(bodyNode.get("x").asInt(), bodyNode.get("y").asInt());
-                    }
-                }
-            }
-
             LOG.info("START");
             return EMPTY;
         }
@@ -164,9 +147,29 @@ public class Snake {
 
             String[] possibleMoves = { "up", "down", "left", "right" };
 
+            List<Coords> foodCoords = getCoordsFromNodeArray(moveRequest.get("board").get("food"));
+            List<Coords> otherSnakeCoords = getSnakeCoords(moveRequest.get("board").get("snakes"));
+
+            // Get board limit coords
+            // Get our own coords
+
+            // Avoid board limit, snake coords, and own coord
+            // Generate list of possible moves
+            // Choose random move of possible
+
             // Choose a random direction to move in
             int choice = new Random().nextInt(possibleMoves.length);
             String move = possibleMoves[choice];
+
+            // Prioritize food ?
+
+
+            //GOALS (in order):
+            //Have a random legal move function - Working snake
+            //Have a food finding loop - maybe trigger at 25 food
+            //Have a stalling function - run early on to waste time and have board control
+            //Have a fighting function - find a way to eliminate opponents
+            //Blend all the above together to make a decent spaghetti monster
 
             LOG.info("MOVE {}", move);
 
@@ -189,6 +192,30 @@ public class Snake {
 
             LOG.info("END");
             return EMPTY;
+        }
+
+        private List<Coords> getSnakeCoords(JsonNode snakeNodeArray) {
+            if (snakeNodeArray.isNull() || !snakeNodeArray.isArray()) return Collections.emptyList();
+
+            List<Coords> coords = Collections.emptyList();
+
+            for (JsonNode snakeNode : snakeNodeArray) {
+                coords.addAll(getCoordsFromNodeArray(snakeNode.get("body")));
+            }
+
+            return coords;
+        }
+
+        private List<Coords> getCoordsFromNodeArray(JsonNode nodeArray) {
+            if (nodeArray.isNull() || !nodeArray.isArray()) return Collections.emptyList();
+
+            List<Coords> coords = Collections.emptyList();
+
+            for (JsonNode bodyNode : nodeArray) {
+                coords.add(new Coords(bodyNode.get("x").asInt(), bodyNode.get("y").asInt()));
+            }
+
+            return coords;
         }
     }
 
