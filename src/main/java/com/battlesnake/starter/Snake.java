@@ -174,7 +174,12 @@ public class Snake {
 
             //GOALS (in order):
             //Have a random legal move function - Working snake
-            //Have a food finding loop - maybe trigger at 25 food
+            Coords targetCoords = null;
+            if (!foodCoords.isEmpty() && moveRequest.get("you").get("health").asInt() <= 25) {
+                Coords snakeHead = snakeCoords.get(0);
+                targetCoords = findClosestAvailableFood(snakeHead, foodCoords, otherSnakeCoords);
+            }
+
             //Have a stalling function - run early on to waste time and have board control
             //Have a fighting function - find a way to eliminate opponents
             //Blend all the above together to make a decent spaghetti monster
