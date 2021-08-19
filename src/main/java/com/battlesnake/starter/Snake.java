@@ -135,20 +135,8 @@ public class Snake {
                 e.printStackTrace();
             }
 
-            /*
-                Example how to retrieve data from the request payload:
-
-                String gameId = moveRequest.get("game").get("id").asText();
-                int height = moveRequest.get("board").get("height").asInt();
-
-            */
-
             String[] possibleMoves = {"up", "down", "left", "right"};
 
-
-            // Get board limit coords
-            // Get our own coords
-            // Avoid board limit, snake coords, and own coord
             List<Coords> foodCoords = getCoordsFromNodeArray(moveRequest.get("board").get("food"));
             List<Coords> otherSnakeCoords = getOtherSnakeCoords(moveRequest.get("board").get("snakes"));
             List<Coords> boardBox = getBoardBox(moveRequest.get("board"));
@@ -156,28 +144,19 @@ public class Snake {
             badMoves.addAll(otherSnakeCoords);
             badMoves.addAll(boardBox);
 
-
             Coords head = getCoordFromNode(moveRequest.get("you").get("head"));
             List<Coords> possible = getPossibleMoves(badMoves, head);
 
-            // Generate list of possible moves
-            // Choose random move of possible
+            Random rand = new Random();
+            Coords randomMove = possible.get(rand.nextInt(possible.size()));
+            String move = head.getMove(randomMove);
 
-            // Choose a random direction to move in
-            int choice = new Random().nextInt(possibleMoves.length);
-            String move = possibleMoves[choice];
-
-            // Prioritize food ?
-
-
-            //GOALS (in order):
-            //Have a random legal move function - Working snake
             Coords targetCoords = null;
             if (!foodCoords.isEmpty() && moveRequest.get("you").get("health").asInt() <= 25) {
-                Coords snakeHead = snakeCoords.get(0);
-                targetCoords = findClosestAvailableFood(snakeHead, foodCoords, otherSnakeCoords);
+                targetCoords = findClosestAvailableFood(head, foodCoords, otherSnakeCoords);
             }
 
+            //GOALS (in order):
             //Have a stalling function - run early on to waste time and have board control
             //Have a fighting function - find a way to eliminate opponents
             //Blend all the above together to make a decent spaghetti monster
@@ -185,7 +164,7 @@ public class Snake {
             LOG.info("MOVE {}", move);
 
             Map<String, String> response = new HashMap<>();
-            response.put("move", "down");
+            response.put("move", move);
             return response;
         }
 
@@ -207,18 +186,18 @@ public class Snake {
 
         private List<Coords> getPossibleMoves(List<Coords> badMoves, Coords ourHead) {
             // [0,1],[3,4],[8,3],[9,2] , me [7,5]
-            List<Coords> possibleMoves = new ArrayList<Coords>();
-            possibleMoves.add(new Coords(ourHead.x, ourHead.y - 1));
-            possibleMoves.add(new Coords(ourHead.x, ourHead.y + 1));
-            possibleMoves.add(new Coords(ourHead.x - 1, ourHead.y));
-            possibleMoves.add(new Coords(ourHead.x + 1, ourHead.y));
+//            List<Coords> possibleMoves = new ArrayList<Coords>();
+//            possibleMoves.add(new Coords(ourHead.x, ourHead.y - 1));
+//            possibleMoves.add(new Coords(ourHead.x, ourHead.y + 1));
+//            possibleMoves.add(new Coords(ourHead.x - 1, ourHead.y));
+//            possibleMoves.add(new Coords(ourHead.x + 1, ourHead.y));
             List<Coords> result = new ArrayList<Coords>();
             HashMap<String, Coords> badMovesMap = new HashMap<>();
             for (Coords coord : badMoves) {
                 badMovesMap.put(String.format("%d:%d", coord.x, coord.y), coord);
             }
 
-            for (Coords coord : possibleMoves) {
+            for (Coords coord : ourHead.getSurroundingNodes()) {
                 if (badMovesMap.containsKey(String.format("%d:%d", coord.x, coord.y))) continue;
                 result.add(coord);
             }

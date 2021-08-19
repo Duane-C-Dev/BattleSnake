@@ -20,4 +20,17 @@ public class Coords {
         surrounding.add(new Coords(x, y - 1));
         return surrounding;
     }
+
+    public String getMove(Coords location) {
+        if (location.x == x + 1 && location.y == y) {
+            return "right";
+        } else if(location.x == x - 1 && location.y == y) {
+            return "left";
+        } else if(location.x == x && location.y == y + 1) {
+            return "up";
+        } else if(location.x == x && location.y == y - 1) {
+            return "down";
+        }
+        return null;
+    }
 }
