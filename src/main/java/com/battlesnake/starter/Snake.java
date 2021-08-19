@@ -9,6 +9,7 @@ import spark.Request;
 import spark.Response;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static spark.Spark.*;
 
@@ -135,17 +136,33 @@ public class Snake {
                 e.printStackTrace();
             }
 
-            String[] possibleMoves = {"up", "down", "left", "right"};
-
             List<Coords> foodCoords = getCoordsFromNodeArray(moveRequest.get("board").get("food"));
+            List<Coords> snake = getSnakeCoords(moveRequest.get("you"));
             List<Coords> otherSnakeCoords = getOtherSnakeCoords(moveRequest.get("board").get("snakes"));
             List<Coords> boardBox = getBoardBox(moveRequest.get("board"));
             List<Coords> badMoves = new ArrayList<>();
             badMoves.addAll(otherSnakeCoords);
             badMoves.addAll(boardBox);
 
+
+
             Coords head = getCoordFromNode(moveRequest.get("you").get("head"));
             List<Coords> possible = getPossibleMoves(badMoves, head);
+
+            Random rand = new Random();
+            Coords randomMove = possible.get(rand.nextInt(possible.size()));
+            String move = head.getMove(randomMove);
+            
+            String log1 = badMoves.stream()
+                    .map(Coords::toString)
+                    .collect(Collectors.joining("-", "{", "}"));
+            String log2 = possible.stream()
+                    .map(Coords::toString)
+                    .collect(Collectors.joining("-", "{", "}"));
+            System.out.println("BadMoves: ");
+            System.out.println(log1);
+            System.out.println("PossibleMoves: ");
+            System.out.println(log2);
 
             Coords targetCoords = null;
             if (!foodCoords.isEmpty() && moveRequest.get("you").get("health").asInt() <= 25) {
@@ -190,13 +207,7 @@ public class Snake {
         }
 
         private List<Coords> getPossibleMoves(List<Coords> badMoves, Coords ourHead) {
-            // [0,1],[3,4],[8,3],[9,2] , me [7,5]
-//            List<Coords> possibleMoves = new ArrayList<Coords>();
-//            possibleMoves.add(new Coords(ourHead.x, ourHead.y - 1));
-//            possibleMoves.add(new Coords(ourHead.x, ourHead.y + 1));
-//            possibleMoves.add(new Coords(ourHead.x - 1, ourHead.y));
-//            possibleMoves.add(new Coords(ourHead.x + 1, ourHead.y));
-            List<Coords> result = new ArrayList<Coords>();
+            List<Coords> result = new ArrayList<>();
             HashMap<String, Coords> badMovesMap = new HashMap<>();
             for (Coords coord : badMoves) {
                 badMovesMap.put(String.format("%d:%d", coord.x, coord.y), coord);
