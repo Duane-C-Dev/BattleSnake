@@ -57,6 +57,9 @@ public class Snake {
          */
         private static final Map<String, String> EMPTY = new HashMap<>();
 
+        SnakeObj us;
+        Map<String, SnakeObj> them;
+
         /**
          * Generic processor that prints out the request and response from the methods.
          *
@@ -118,6 +121,18 @@ public class Snake {
          * @return responses back to the engine are ignored.
          */
         public Map<String, String> start(JsonNode startRequest) {
+            JsonNode bodyNodes = startRequest.get("you").get("body");
+            int bodyIndex = 0;
+            if (bodyNodes.isArray()) {
+                for (JsonNode bodyNode : bodyNodes) {
+                    if (bodyIndex == 0) {
+                        us = new SnakeObj(bodyNode.get("x").asInt(), bodyNode.get("y").asInt(), bodyNodes.size());
+                    } else {
+                        us.Move(bodyNode.get("x").asInt(), bodyNode.get("y").asInt());
+                    }
+                }
+            }
+
             LOG.info("START");
             return EMPTY;
         }
