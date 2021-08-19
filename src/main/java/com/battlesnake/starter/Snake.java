@@ -147,13 +147,18 @@ public class Snake {
             Coords head = getCoordFromNode(moveRequest.get("you").get("head"));
             List<Coords> possible = getPossibleMoves(badMoves, head);
 
-            Random rand = new Random();
-            Coords randomMove = possible.get(rand.nextInt(possible.size()));
-            String move = head.getMove(randomMove);
-
             Coords targetCoords = null;
             if (!foodCoords.isEmpty() && moveRequest.get("you").get("health").asInt() <= 25) {
                 targetCoords = findClosestAvailableFood(head, foodCoords, otherSnakeCoords);
+            }
+
+            String move;
+            if (targetCoords != null) {
+                move = getMoveToTarget(targetCoords, possible).getMove(targetCoords);
+            } else {
+                Random rand = new Random();
+                Coords randomMove = possible.get(rand.nextInt(possible.size()));
+                move = head.getMove(randomMove);
             }
 
             //GOALS (in order):
@@ -315,6 +320,21 @@ public class Snake {
 
             return distanceToClosestFood;
         }
-    }
 
+        private Coords getMoveToTarget(Coords target, List<Coords> possibleList) {
+            int distanceToClosestPossible = 0;
+            Coords closestPossibleCoords = null;
+
+            for (Coords possible: possibleList) {
+                int distanceToTarget = getTotalDistanceBetweenCoords(target, possible);
+
+                if (distanceToClosestPossible == 0 || distanceToTarget < distanceToClosestPossible) {
+                    closestPossibleCoords = possible;
+                    distanceToClosestPossible = distanceToTarget;
+                }
+            }
+
+            return closestPossibleCoords;
+        }
+    }
 }
