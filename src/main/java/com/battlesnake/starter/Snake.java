@@ -217,6 +217,49 @@ public class Snake {
 
             return coords;
         }
+
+        private Coords findClosestAvailableFood(Coords ourSnakeHead, List<Coords> foodList, List<Coords> otherSnakes) {
+            if (foodList.isEmpty()) return null;
+
+            Coords closestAnyFoodCoords = null;
+            Coords closestSafeFoodCoords = null;
+            int distanceToClosestAnyFood = 0;
+
+            for (Coords food : foodList) {
+                int distanceToFood = getTotalDistanceBetweenCoords(food, ourSnakeHead);
+
+                // Check this if this is the first food found or is the closest food
+                if (distanceToClosestAnyFood == 0 || distanceToFood < distanceToClosestAnyFood) {
+                    closestAnyFoodCoords = food;
+                    distanceToClosestAnyFood = distanceToFood;
+
+                    // Check if this is the closest food not closer to another snake
+                    if (distanceToFood <= getOtherSnakeClosestDistanceToFood(food, otherSnakes)) {
+                        closestSafeFoodCoords = food;
+                    }
+                }
+            }
+
+            return closestSafeFoodCoords != null ? closestSafeFoodCoords : closestAnyFoodCoords;
+        }
+
+        private int getTotalDistanceBetweenCoords(Coords coordsA, Coords coordsB) {
+            return Math.abs(coordsA.x - coordsB.x) + Math.abs(coordsA.y - coordsB.y);
+        }
+
+        private int getOtherSnakeClosestDistanceToFood(Coords food, List<Coords> otherSnakes) {
+            int distanceToClosestFood = 0;
+
+            for (Coords otherSnake: otherSnakes) {
+                int distanceToFood = getTotalDistanceBetweenCoords(food, otherSnake);
+
+                if (distanceToClosestFood == 0 || distanceToFood < distanceToClosestFood) {
+                    distanceToClosestFood = distanceToFood;
+                }
+            }
+
+            return distanceToClosestFood;
+        }
     }
 
 }
