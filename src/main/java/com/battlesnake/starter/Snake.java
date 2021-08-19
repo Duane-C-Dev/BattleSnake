@@ -154,7 +154,7 @@ public class Snake {
 
             String move;
             if (targetCoords != null) {
-                move = getMoveToTarget(targetCoords, possible).getMove(targetCoords);
+                move = head.getMove(getMoveToTarget(targetCoords, possible));
             } else {
                 Random rand = new Random();
                 Coords randomMove = possible.get(rand.nextInt(possible.size()));
