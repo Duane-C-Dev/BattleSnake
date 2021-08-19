@@ -151,12 +151,12 @@ public class Snake {
 
             // Choose a random direction to move in
             int choice = new Random().nextInt(possibleMoves.length);
-            String move = possibleMoves[choice];
+            String move = "left";
 
             LOG.info("MOVE {}", move);
 
             Map<String, String> response = new HashMap<>();
-            response.put("move", "down");
+            response.put("move", move);
             return response;
         }
 
