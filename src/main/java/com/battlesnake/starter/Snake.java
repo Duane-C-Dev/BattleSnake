@@ -144,25 +144,8 @@ public class Snake {
             badMoves.addAll(otherSnakeCoords);
             badMoves.addAll(boardBox);
 
-
-
             Coords head = getCoordFromNode(moveRequest.get("you").get("head"));
             List<Coords> possible = getPossibleMoves(badMoves, head);
-
-            Random rand = new Random();
-            Coords randomMove = possible.get(rand.nextInt(possible.size()));
-            String move = head.getMove(randomMove);
-            
-            String log1 = badMoves.stream()
-                    .map(Coords::toString)
-                    .collect(Collectors.joining("-", "{", "}"));
-            String log2 = possible.stream()
-                    .map(Coords::toString)
-                    .collect(Collectors.joining("-", "{", "}"));
-            System.out.println("BadMoves: ");
-            System.out.println(log1);
-            System.out.println("PossibleMoves: ");
-            System.out.println(log2);
 
             Coords targetCoords = null;
             if (!foodCoords.isEmpty() && moveRequest.get("you").get("health").asInt() <= 25) {
@@ -182,6 +165,18 @@ public class Snake {
             //Have a stalling function - run early on to waste time and have board control
             //Have a fighting function - find a way to eliminate opponents
             //Blend all the above together to make a decent spaghetti monster
+
+
+            String log1 = badMoves.stream()
+                    .map(Coords::toString)
+                    .collect(Collectors.joining("-", "{", "}"));
+            String log2 = possible.stream()
+                    .map(Coords::toString)
+                    .collect(Collectors.joining("-", "{", "}"));
+            LOG.info("BadMoves: ");
+            LOG.info(log1);
+            LOG.info("PossibleMoves: ");
+            LOG.info(log2);
 
             LOG.info("MOVE {}", move);
 
