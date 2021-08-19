@@ -10,13 +10,11 @@ import spark.Response;
 
 import java.util.*;
 
-import static spark.Spark.port;
-import static spark.Spark.post;
-import static spark.Spark.get;
+import static spark.Spark.*;
 
 /**
  * This is a simple Battlesnake server written in Java.
- * 
+ * <p>
  * For instructions see
  * https://github.com/BattlesnakeOfficial/starter-snake-java/README.md
  */
@@ -39,7 +37,7 @@ public class Snake {
             port = "8080";
         }
         port(Integer.parseInt(port));
-        get("/",  HANDLER::process, JSON_MAPPER::writeValueAsString);
+        get("/", HANDLER::process, JSON_MAPPER::writeValueAsString);
         post("/start", HANDLER::process, JSON_MAPPER::writeValueAsString);
         post("/move", HANDLER::process, JSON_MAPPER::writeValueAsString);
         post("/end", HANDLER::process, JSON_MAPPER::writeValueAsString);
@@ -87,28 +85,28 @@ public class Snake {
             }
         }
 
-    
+
         /**
          * This method is called everytime your Battlesnake is entered into a game.
-         * 
+         * <p>
          * Use this method to decide how your Battlesnake is going to look on the board.
          *
          * @return a response back to the engine containing the Battlesnake setup
-         *         values.
+         * values.
          */
-        public Map<String, String> index() {         
+        public Map<String, String> index() {
             Map<String, String> response = new HashMap<>();
             response.put("apiversion", "1");
             response.put("author", "Moms Spaghetti");
             response.put("color", "#4A412A");
             response.put("head", "shades");
-            response.put("tail", "pixel");  
+            response.put("tail", "pixel");
             return response;
         }
 
         /**
          * This method is called everytime your Battlesnake is entered into a game.
-         * 
+         * <p>
          * Use this method to decide how your Battlesnake is going to look on the board.
          *
          * @param startRequest a JSON data map containing the information about the game
@@ -123,7 +121,7 @@ public class Snake {
         /**
          * This method is called on every turn of a game. It's how your snake decides
          * where to move.
-         * 
+         * <p>
          * Valid moves are "up", "down", "left", or "right".
          *
          * @param moveRequest a map containing the JSON sent to this snake. Use this
@@ -145,7 +143,7 @@ public class Snake {
 
             */
 
-            String[] possibleMoves = { "up", "down", "left", "right" };
+            String[] possibleMoves = {"up", "down", "left", "right"};
 
 
             // Get board limit coords
@@ -153,14 +151,14 @@ public class Snake {
             // Avoid board limit, snake coords, and own coord
             List<Coords> foodCoords = getCoordsFromNodeArray(moveRequest.get("board").get("food"));
             List<Coords> otherSnakeCoords = getOtherSnakeCoords(moveRequest.get("board").get("snakes"));
-            List<Coords> snakeCoords = getSnakeCoords(moveRequest.get("you"));
             List<Coords> boardBox = getBoardBox(moveRequest.get("board"));
             List<Coords> badMoves = new ArrayList<>();
             badMoves.addAll(otherSnakeCoords);
-            badMoves.addAll(snakeCoords);
             badMoves.addAll(boardBox);
 
 
+            Coords head = getCoordFromNode(moveRequest.get("you").get("head"));
+            List<Coords> possible = getPossibleMoves(badMoves, head);
 
             // Generate list of possible moves
             // Choose random move of possible
@@ -193,7 +191,7 @@ public class Snake {
 
         /**
          * This method is called when a game your Battlesnake was in ends.
-         * 
+         * <p>
          * It is purely for informational purposes, you don't have to make any decisions
          * here.
          *
@@ -205,6 +203,27 @@ public class Snake {
 
             LOG.info("END");
             return EMPTY;
+        }
+
+        private List<Coords> getPossibleMoves(List<Coords> badMoves, Coords ourHead) {
+            // [0,1],[3,4],[8,3],[9,2] , me [7,5]
+            List<Coords> possibleMoves = new ArrayList<Coords>();
+            possibleMoves.add(new Coords(ourHead.x, ourHead.y - 1));
+            possibleMoves.add(new Coords(ourHead.x, ourHead.y + 1));
+            possibleMoves.add(new Coords(ourHead.x - 1, ourHead.y));
+            possibleMoves.add(new Coords(ourHead.x + 1, ourHead.y));
+            List<Coords> result = new ArrayList<Coords>();
+            HashMap<String, Coords> badMovesMap = new HashMap<>();
+            for (Coords coord : badMoves) {
+                badMovesMap.put(String.format("%d:%d", coord.x, coord.y), coord);
+            }
+
+            for (Coords coord : possibleMoves) {
+                if (badMovesMap.containsKey(String.format("%d:%d", coord.x, coord.y))) continue;
+                result.add(coord);
+            }
+
+            return result;
         }
 
         private List<Coords> getBoardBox(JsonNode board) {
@@ -267,6 +286,12 @@ public class Snake {
             }
 
             return coords;
+        }
+
+        private Coords getCoordFromNode(JsonNode node) {
+            if (node.isNull() || node.isArray()) return null;
+
+            return new Coords(node.get("x").asInt(), node.get("y").asInt());
         }
 
         private Coords findClosestAvailableFood(Coords ourSnakeHead, List<Coords> foodList, List<Coords> otherSnakes) {
