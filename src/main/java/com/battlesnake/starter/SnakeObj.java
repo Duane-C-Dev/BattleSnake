@@ -3,22 +3,24 @@ package com.battlesnake.starter;
 import java.util.Queue;
 
 public class SnakeObj {
+    String id;
+    String name;
+    int health;
     Queue<Coords> body;
+    int latency;
+    Coords head;
     int length;
 
-    public SnakeObj(int startX, int startY, int length) {
-        body.add(new Coords(startX, startY));
+
+    public SnakeObj(String id, String name, int health, Queue<Coords> body, int latency, Coords head, int length) {
+        this.id = id;
+        this.name = name;
+        this.health = health;
+        this.body = body;
+        this.latency = latency;
+        this.head = head;
+        this.length = length;
     }
 
-    public void Move(int toX, int toY) {
-        body.add(new Coords(toX, toY));
 
-        if (body.size() > length) {
-            body.remove();
-        }
-    }
-
-    public void EatFood() {
-        length++;
-    }
 }
